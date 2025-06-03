@@ -24,7 +24,6 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import PeopleIcon from '@mui/icons-material/People';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import EventIcon from '@mui/icons-material/Event';
-import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -55,82 +54,142 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
+import CircularProgress from '@mui/material/CircularProgress';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import RateTrends from './RateTrends';
+import TableContainer from '@mui/material/TableContainer';
+import Table from '@mui/material/Table';
+import TableHead from '@mui/material/TableHead';
+import TableBody from '@mui/material/TableBody';
+import TableRow from '@mui/material/TableRow';
+import TableCell from '@mui/material/TableCell';
 
 const drawerWidth = 240;
 
-function OverviewCard({ title, value, icon, color, trend, trendLabel, trendColor, miniChart, explanation }) {
+// Mock data
+const competitorsDB = [
+  { name: 'The Ritz London', ADR: 142 },
+  { name: 'The Savoy', ADR: 144 },
+  { name: "Claridge's", ADR: 139 },
+  { name: 'The Langham', ADR: 141 },
+  { name: 'Corinthia Hotel', ADR: 143 },
+  { name: 'The Dorchester', ADR: 140 },
+  { name: 'Shangri-La The Shard', ADR: 145 },
+  { name: 'Rosewood London', ADR: 138 },
+  { name: 'The Connaught', ADR: 143 },
+  { name: 'Four Seasons Park Lane', ADR: 146 },
+];
+
+function OverviewCard({ title, value, icon, trend, trendLabel, explanation }) {
   return (
-    <Card
+    <Box
       sx={{
-        flex: 1,
-        bgcolor: '#fff',
-        borderRadius: 3,
-        boxShadow: '0 2px 12px 0 rgba(16,30,54,0.04)',
-        border: '1px solid #f0f1f3',
-        p: 3,
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
-        minHeight: 180,
-        transition: 'box-shadow 0.2s',
-        '&:hover': {
-          boxShadow: '0 4px 24px 0 rgba(16,30,54,0.10)',
-        },
       }}
     >
-      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-        <Box>
-          <Typography variant="subtitle1" color="text.primary" fontWeight={600} mb={1}>
-            {title}
-          </Typography>
-          <Typography variant="h3" color="text.primary" fontWeight={800} mb={0.5}>
-            {value}
-          </Typography>
-          {explanation && (
-            <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+      <Box sx={{ mb: 3 }}>
+        <Typography 
+          variant="subtitle1" 
+          color="text.secondary" 
+          fontWeight={500} 
+          sx={{ mb: 3, fontSize: '0.875rem' }}
+        >
+          {title}
+        </Typography>
+        
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <Box>
+            <Typography 
+              variant="h3" 
+              color="text.primary" 
+              fontWeight={700} 
+              sx={{ 
+                mb: 1,
+                fontSize: { xs: '2rem', md: '2.5rem' },
+                lineHeight: 1
+              }}
+            >
+              {value}
+            </Typography>
+            <Typography 
+              variant="caption" 
+              color="text.secondary" 
+              sx={{ 
+                display: 'block', 
+                mb: 1.5,
+                fontSize: '0.75rem'
+              }}
+            >
               {explanation}
             </Typography>
-          )}
-          {trend && (
-            <Box display="flex" alignItems="center" gap={1}>
-              <Typography variant="body2" color={trendColor || 'success.main'} fontWeight={700}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography 
+                variant="body2" 
+                color={trend?.startsWith('+') ? 'success.main' : 'error.main'} 
+                fontWeight={600}
+                sx={{ fontSize: '0.875rem' }}
+              >
                 {trend}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography 
+                variant="body2" 
+                color="text.secondary"
+                sx={{ fontSize: '0.875rem' }}
+              >
                 {trendLabel}
               </Typography>
             </Box>
-          )}
-        </Box>
-        <Box display="flex" alignItems="center" justifyContent="center" minWidth={48}>
-          {miniChart || icon}
+          </Box>
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              p: 1,
+              borderRadius: 2,
+              bgcolor: 'background.default'
+            }}
+          >
+            {React.cloneElement(icon, { 
+              sx: { 
+                fontSize: 32,
+                color: 'primary.main',
+                opacity: 0.8
+              } 
+            })}
+          </Box>
         </Box>
       </Box>
-    </Card>
+    </Box>
   );
 }
 
+// Helper function to get next N days with dates and day names
+const getNextNDays = (n) => {
+  return Array.from({ length: n }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() + i);
+    return {
+      date: date.toISOString().split('T')[0],
+      dayName: date.toLocaleDateString('en-US', { weekday: 'long' }),
+      ADR: 140 + Math.round(Math.random() * 10),
+      Compset: 135 + Math.round(Math.random() * 10),
+      cityDemand: Math.round(Math.random() * 100),
+      competitors: competitorsDB.map(comp => ({
+        ...comp,
+        ADR: comp.ADR + Math.round(Math.random() * 10 - 5)
+      })).sort((a, b) => b.ADR - a.ADR)
+    };
+  });
+};
+
 const allRateTrendsData = {
-  'Next 7 Days': Array.from({ length: 7 }, (_, i) => ({
-    day: `Day ${i + 1}`,
-    ADR: 140 + Math.round(Math.random() * 10),
-    Compset: 135 + Math.round(Math.random() * 10),
-    position: `${Math.ceil(Math.random() * 5)}th out of 10`,
-  })),
-  'Next 14 Days': Array.from({ length: 14 }, (_, i) => ({
-    day: `Day ${i + 1}`,
-    ADR: 140 + Math.round(Math.random() * 10),
-    Compset: 135 + Math.round(Math.random() * 10),
-    position: `${Math.ceil(Math.random() * 5)}th out of 10`,
-  })),
-  'Next 30 Days': Array.from({ length: 30 }, (_, i) => ({
-    day: `Day ${i + 1}`,
-    ADR: 140 + Math.round(Math.random() * 10),
-    Compset: 135 + Math.round(Math.random() * 10),
-    position: `${Math.ceil(Math.random() * 5)}th out of 10`,
-  })),
+  'Next 7 Days': getNextNDays(7),
+  'Next 14 Days': getNextNDays(14),
+  'Next 30 Days': getNextNDays(30),
 };
 
 const roomTypes = ['Standard', 'Deluxe', 'Suite'];
@@ -159,9 +218,9 @@ const allLondonEvents = [
 ];
 
 const sidebarItems = [
-  { text: 'Dashboard', icon: <DashboardIcon /> },
-  { text: 'Rate Trends', icon: <TrendingUpIcon /> },
-  { text: 'Events', icon: <EventIcon /> },
+  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+  { text: 'Rate Trends', icon: <TrendingUpIcon />, path: '/rate-trends' },
+  { text: 'Events', icon: <EventIcon />, path: '/events' },
 ];
 
 const competitors = [
@@ -204,907 +263,862 @@ const channelData = [
   },
 ];
 
-// Add a database of 10 hotel competitors with mock ADRs
-const competitorsDB = [
-  { name: 'The Ritz London', ADR: 142 },
-  { name: 'The Savoy', ADR: 144 },
-  { name: "Claridge's", ADR: 139 },
-  { name: 'The Langham', ADR: 141 },
-  { name: 'Corinthia Hotel', ADR: 143 },
-  { name: 'The Dorchester', ADR: 140 },
-  { name: 'Shangri-La The Shard', ADR: 145 },
-  { name: 'Rosewood London', ADR: 138 },
-  { name: 'The Connaught', ADR: 143 },
-  { name: 'Four Seasons Park Lane', ADR: 146 },
-];
+// AI Assistant Drawer Component
+function AskAIDrawer({ open, onClose }) {
+  const [loading, setLoading] = useState(false);
+  const [aiResponse, setAiResponse] = useState('');
+  const [question, setQuestion] = useState('');
 
-function App() {
-  // Filter states
-  const [date, setDate] = useState('2024-06-01');
-  const [compareDate, setCompareDate] = useState('2024-07-01');
-  const [los, setLos] = useState(1);
-  const [roomType, setRoomType] = useState(roomTypes[0]);
-  const [lowestRate, setLowestRate] = useState('');
-  const [filteredData, setFilteredData] = useState(allRateTrendsData['Next 30 Days']);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [aiDialogOpen, setAIDialogOpen] = useState(false);
-  const [aiResponse, setAIResponse] = useState('');
-  const [period, setPeriod] = useState('Next 30 Days');
-  const [otaChannel, setOtaChannel] = useState('All');
-  const [compareWith, setCompareWith] = useState('Yesterday');
-  const [compset, setCompset] = useState('Primary');
-  const [showMarketDemand, setShowMarketDemand] = useState(false);
-  const [showAirlineData, setShowAirlineData] = useState(false);
-  const [chartView, setChartView] = useState('bar');
-  const aiPrompts = [
+  const readyMadePrompts = [
     {
-      text: 'Show me the best rates for next weekend',
-      icon: <TrendingUpIcon color="primary" />,
+      title: "Rate Strategy",
+      prompts: [
+        "What should be our pricing strategy for the upcoming London Fashion Week?",
+        "How do our weekend rates compare to competitors?",
+        "Should we adjust our rates based on current market position?"
+      ]
     },
     {
-      text: 'Compare my hotel rates with competitors',
-      icon: <CompareArrowsIcon color="primary" />,
+      title: "Market Analysis",
+      prompts: [
+        "What are the major events affecting our demand in the next 30 days?",
+        "How does our rate parity look across different channels?",
+        "What is our competitive position in the luxury segment?"
+      ]
     },
     {
-      text: 'What is the average rate trend for the last 30 days?',
-      icon: <TimelineIcon color="primary" />,
-    },
-    {
-      text: 'Are there any parity issues this week?',
-      icon: <WarningAmberIcon color="warning" />,
-    },
-    {
-      text: 'Suggest pricing strategies for high occupancy dates',
-      icon: <LightbulbIcon color="primary" />,
-    },
+      title: "Revenue Optimization",
+      prompts: [
+        "Where are our biggest revenue opportunities this month?",
+        "Should we implement any length-of-stay restrictions?",
+        "Which room types are underperforming in RevPAR?"
+      ]
+    }
   ];
 
-  // Update filteredData when period changes
-  useEffect(() => {
-    setFilteredData(allRateTrendsData[period] || allRateTrendsData['Next 30 Days']);
-  }, [period]);
-
-  const handleSidebarToggle = () => setSidebarOpen((open) => !open);
-  const handleAIClick = () => setAIDialogOpen(true);
-  const handleAIClose = () => setAIDialogOpen(false);
-  const handlePromptClick = (prompt) => {
-    // Example dynamic AI response using competitors
-    let response = '';
-    if (prompt.includes('best rates')) {
-      response = `Your hotel ranks 2nd out of 10 for best rates this weekend. Only ${competitors[0]} has a lower rate.\n\nCompetitors: ${competitors.join(', ')}`;
-    } else if (prompt.includes('Compare my hotel rates')) {
-      response = `Your ADR is $145.\n\nCompetitor ADRs:\n` + competitors.map((name, i) => `- ${name}: $${140 + i}`).join('\n');
-    } else if (prompt.includes('average rate trend')) {
-      response = `The average ADR for the last 30 days among competitors is $142.\n\nCompetitors: ${competitors.join(', ')}`;
-    } else if (prompt.includes('parity issues')) {
-      response = `No major parity issues detected this week.\n\nCompetitors checked: ${competitors.slice(0, 5).join(', ')}...`;
-    } else if (prompt.includes('pricing strategies')) {
-      response = `Consider increasing rates for high occupancy dates.\n\nCompetitors like ${competitors[2]} and ${competitors[5]} have already raised their prices.`;
-    } else {
-      response = `AI is thinking... (This is a placeholder for the AI response to: "${prompt}")`;
-    }
-    setAIResponse(response);
+  const handlePromptClick = (promptText) => {
+    setQuestion(promptText);
   };
 
-  // Helper to get month/year label for Rate Trends
-  function getRateTrendsMonthLabel() {
-    // Assume start date is June 1, 2025
-    const start = new Date('2025-06-01');
-    let end = new Date(start);
-    if (period === 'Next 7 Days') end.setDate(start.getDate() + 6);
-    else if (period === 'Next 14 Days') end.setDate(start.getDate() + 13);
-    else end.setDate(start.getDate() + 29);
-    // If start and end are in the same month, show that month; else show range
-    if (start.getMonth() === end.getMonth()) {
-      return `for ${start.toLocaleString('default', { month: 'long', year: 'numeric' })}`;
-    } else {
-      return `for ${start.toLocaleString('default', { month: 'long' })} - ${end.toLocaleString('default', { month: 'long', year: 'numeric' })}`;
-    }
-  }
+  const handleAskAI = async () => {
+    setLoading(true);
+    // Simulated AI response - In a real application, this would be an API call
+    setTimeout(() => {
+      const insights = [
+        "Based on historical data, your ADR is currently 5% below the competitive set for the upcoming weekend. Consider adjusting rates upward for Friday and Saturday nights.",
+        "There's a major conference at ExCeL London next month that's driving demand. Your competitors have already increased their rates by 15-20% for those dates.",
+        "Your rate parity score has dropped to 95% across OTAs. Main discrepancies found on Booking.com for Superior Rooms.",
+        "Occupancy forecast shows potential for compression dates during London Fashion Week. Consider implementing length-of-stay restrictions.",
+        "Your RevPAR index vs. competitive set has improved by 3% this month, primarily driven by better weekend performance."
+      ];
+      setAiResponse(insights.join('\n\n'));
+      setLoading(false);
+    }, 1500);
+  };
 
-  // Generate mock trend line data for Market Demand and Airline Data
-  const chartDataWithTrends = filteredData.map((d, i) => ({
-    ...d,
-    marketDemand: 180 + Math.round(Math.sin(i / 5) * 10) + (i % 7),
-    airlineData: 170 + Math.round(Math.cos(i / 7) * 8) + (i % 5),
-  }));
+  return (
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      sx={{
+        '& .MuiDrawer-paper': {
+          width: { xs: '100%', sm: 450 },
+          boxSizing: 'border-box',
+          p: 3,
+        },
+      }}
+    >
+      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <SmartToyIcon color="primary" />
+            <Typography variant="h6">AI Revenue Assistant</Typography>
+          </Box>
+          <IconButton onClick={onClose} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
 
-  // Helper to get the date range for a given period string
-  function getPeriodRangeByLabel(periodLabel) {
-    const start = new Date('2025-06-01');
-    let days = 30;
-    if (periodLabel === 'Next 7 Days') days = 7;
-    else if (periodLabel === 'Next 14 Days') days = 14;
-    const end = new Date(start);
-    end.setDate(start.getDate() + days - 1);
-    return { start, end, days };
-  }
+        <Box sx={{ mb: 3 }}>
+          <TextField
+            fullWidth
+            label="Ask about revenue, pricing, or market insights"
+            variant="outlined"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="E.g., What are the key revenue opportunities for next month?"
+            multiline
+            rows={3}
+          />
+        </Box>
 
-  // Generate mock data for a period
-  function generateMockKPI(periodLabel) {
-    // Just for demo, randomize based on period
-    if (periodLabel === 'Next 7 Days') return { ADR: 145, compsetADR: 132, availability: 92, parity: 98 };
-    if (periodLabel === 'Next 14 Days') return { ADR: 143, compsetADR: 133, availability: 91, parity: 97 };
-    if (periodLabel === 'Next 30 Days') return { ADR: 140, compsetADR: 134, availability: 90, parity: 96 };
-    return { ADR: 140, compsetADR: 134, availability: 90, parity: 96 };
-  }
-  function generateMockDistribution(periodLabel) {
-    if (periodLabel === 'Next 7 Days') return [
-      { name: 'Booking.com', otaRank: 2, parityScore: 97, reviews: 4.6 },
-      { name: 'Expedia', otaRank: 3, parityScore: 95, reviews: 4.4 },
-      { name: 'Agoda', otaRank: 1, parityScore: 99, reviews: 4.7 },
-    ];
-    if (periodLabel === 'Next 14 Days') return [
-      { name: 'Booking.com', otaRank: 3, parityScore: 96, reviews: 4.5 },
-      { name: 'Expedia', otaRank: 2, parityScore: 94, reviews: 4.3 },
-      { name: 'Agoda', otaRank: 1, parityScore: 98, reviews: 4.6 },
-    ];
-    return [
-      { name: 'Booking.com', otaRank: 4, parityScore: 95, reviews: 4.4 },
-      { name: 'Expedia', otaRank: 3, parityScore: 93, reviews: 4.2 },
-      { name: 'Agoda', otaRank: 2, parityScore: 97, reviews: 4.5 },
-    ];
-  }
-  function generateMockTrends(periodLabel) {
-    const { days } = getPeriodRangeByLabel(periodLabel);
-    return Array.from({ length: days }, (_, i) => ({
-      day: `Day ${i + 1}`,
-      ADR: 140 + Math.round(Math.random() * 10),
-      Compset: 135 + Math.round(Math.random() * 10),
-      position: `${Math.ceil(Math.random() * 5)}th out of 10`,
-    }));
-  }
+        <Typography variant="subtitle2" color="text.secondary" mb={2}>
+          Ready-made Prompts
+        </Typography>
 
-  // Get current and compare period data
-  const kpiCurrent = generateMockKPI(period);
-  const kpiCompare = generateMockKPI(compareWith);
-  const distCurrent = generateMockDistribution(period);
-  const distCompare = generateMockDistribution(compareWith);
-  const trendsCurrent = filteredData.map((d, i) => {
-    // For demo, rotate ADRs for each day
-    const compADRs = competitorsDB.map((c, idx) => c.ADR + ((i + idx) % 3));
-    const avgCompset = Math.round(compADRs.reduce((a, b) => a + b, 0) / compADRs.length);
-    return {
-      ...d,
-      Compset: avgCompset,
-      competitors: competitorsDB.map((c, idx) => ({
-        name: c.name,
-        ADR: compADRs[idx],
-        position: null // will be filled below
-      })),
-      myHotel: { name: 'My Hotel', ADR: d.ADR },
-    };
-  });
-  // Assign positions for each competitor and myHotel for each day
-  trendsCurrent.forEach(day => {
-    const all = [day.myHotel, ...day.competitors];
-    all.sort((a, b) => a.ADR - b.ADR);
-    all.forEach((item, idx) => {
-      item.position = `${idx + 1}${idx === 0 ? 'st' : idx === 1 ? 'nd' : idx === 2 ? 'rd' : 'th'}`;
-    });
-    // Update positions in day
-    day.myHotel.position = all.find(i => i.name === 'My Hotel').position;
-    day.competitors.forEach(c => {
-      c.position = all.find(i => i.name === c.name).position;
-    });
-  });
+        <Box sx={{ flex: 1, overflow: 'auto' }}>
+          {readyMadePrompts.map((category) => (
+            <Box key={category.title} mb={3}>
+              <Typography variant="subtitle1" fontWeight={600} mb={1}>
+                {category.title}
+              </Typography>
+              <Stack spacing={1}>
+                {category.prompts.map((prompt) => (
+                  <Button
+                    key={prompt}
+                    variant="outlined"
+                    size="small"
+                    onClick={() => handlePromptClick(prompt)}
+                    sx={{
+                      justifyContent: 'flex-start',
+                      textAlign: 'left',
+                      textTransform: 'none',
+                      borderColor: 'divider',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        bgcolor: 'primary.lighter',
+                      },
+                    }}
+                  >
+                    {prompt}
+                  </Button>
+                ))}
+              </Stack>
+            </Box>
+          ))}
+        </Box>
 
-  // KPI variance helpers
-  function getVariance(curr, prev) {
-    if (prev === 0) return 0;
-    return ((curr - prev) / prev) * 100;
-  }
+        {aiResponse && (
+          <Box sx={{ mb: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1, overflow: 'auto' }}>
+            <Typography variant="subtitle2" color="text.secondary" mb={1}>
+              AI Response:
+            </Typography>
+            <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
+              {aiResponse}
+            </Typography>
+          </Box>
+        )}
 
-  // Filter events/holidays based on period
-  const { start: periodStart, end: periodEnd } = getPeriodRangeByLabel(period);
-  const filteredLondonEvents = allLondonEvents.filter(e => {
-    const d = new Date(e.date);
-    return d >= periodStart && d <= periodEnd;
-  });
+        {loading && (
+          <Box display="flex" justifyContent="center" my={4}>
+            <CircularProgress />
+          </Box>
+        )}
 
-  // Add state for competitor modal
-  const [competitorModal, setCompetitorModal] = useState({ open: false, day: null });
+        <Box sx={{ mt: 'auto', pt: 2, borderTop: 1, borderColor: 'divider' }}>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={handleAskAI}
+            disabled={!question.trim() || loading}
+            startIcon={<SmartToyIcon />}
+          >
+            Get Insights
+          </Button>
+        </Box>
+      </Box>
+    </Drawer>
+  );
+}
 
-  // Add state for hovered day in Rate Trends
-  const [hoveredDay, setHoveredDay] = useState(null);
-
-  // Add state for toggling series visibility
+function App() {
+  const [open, setOpen] = useState(false);
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState('graph');
+  const [selectedTimeRange, setSelectedTimeRange] = useState('Next 7 Days');
+  const [selectedRoomType, setSelectedRoomType] = useState('Standard');
+  const [selectedLOS, setSelectedLOS] = useState(1);
   const [visibleSeries, setVisibleSeries] = useState({ ADR: true, Compset: true });
 
-  // Legend click handler
-  const handleLegendClick = (o) => {
-    const key = o.dataKey;
-    setVisibleSeries(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggleDrawer = () => {
+    setOpen(!open);
   };
 
   return (
     <Router>
-      <Box sx={{ display: 'flex', bgcolor: '#f5f6fa', minHeight: '100vh' }}>
+      <Box sx={{ display: 'flex', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
         <CssBaseline />
-        {/* Sidebar */}
-        <Drawer
-          variant="permanent"
-          open={sidebarOpen}
+        <AppBar 
+          position="fixed" 
+          elevation={0}
           sx={{
-            width: sidebarOpen ? drawerWidth : 72,
-            flexShrink: 0,
-            whiteSpace: 'nowrap',
-            transition: (theme) => theme.transitions.create('width', {
-              easing: theme.transitions.easing.sharp,
-              duration: theme.transitions.duration.enteringScreen,
-            }),
-            [`& .MuiDrawer-paper`]: {
-              width: sidebarOpen ? drawerWidth : 72,
-              boxSizing: 'border-box',
-              bgcolor: '#fff',
-              borderRight: '1px solid #e0e0e0',
-              overflowX: 'hidden',
-              transition: (theme) => theme.transitions.create('width', {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.enteringScreen,
-              }),
-            },
+            backgroundColor: 'white',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            backdropFilter: 'blur(6px)',
+            zIndex: (theme) => theme.zIndex.drawer + 1,
+            ml: { sm: open ? `${drawerWidth}px` : '72px' },
+            width: { sm: `calc(100% - ${open ? drawerWidth : 72}px)` },
+            transition: 'margin-left 0.3s ease, width 0.3s ease'
           }}
         >
-          <Toolbar sx={{ minHeight: 64, justifyContent: sidebarOpen ? 'flex-start' : 'center', px: 1 }}>
-            {sidebarOpen && (
-              <Box display="flex" alignItems="center" gap={1}>
-                <Typography variant="h6" color="primary" fontWeight={800} sx={{ letterSpacing: 1 }}>
-                  BCV
-                </Typography>
-                <Box
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    bgcolor: '#f5f6fa',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    color: 'primary.main',
-                    fontSize: 18,
+          <Toolbar sx={{ minHeight: { xs: 64, sm: 70 }, px: { xs: 2, sm: 4 } }}>
+            <IconButton
+              color="primary"
+              aria-label="open drawer"
+              onClick={toggleDrawer}
+              edge="start"
+              sx={{ mr: 2 }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+              <Typography 
+                variant="h6" 
+                component="div" 
+                sx={{ 
+                  color: 'text.primary',
+                  fontWeight: 600,
+                  fontSize: { xs: '1rem', sm: '1.25rem' }
+                }}
+              >
+                Hyatt London
+              </Typography>
+              <Typography 
+                variant="subtitle2" 
+                sx={{ 
+                  ml: 1, 
+                  color: 'text.secondary',
+                  display: { xs: 'none', sm: 'block' }
+                }}
+              >
+                Revenue Navigator
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              startIcon={<SmartToyIcon />}
+              onClick={() => setAiDialogOpen(true)}
+              sx={{
+                borderRadius: 2,
+                px: { xs: 2, sm: 3 },
+                py: 1,
+                textTransform: 'none',
+                fontWeight: 500,
+                boxShadow: 'none',
+                '&:hover': {
+                  boxShadow: 'none',
+                }
+              }}
+            >
+              Ask AI
+            </Button>
+          </Toolbar>
+        </AppBar>
+
+        <Routes>
+          <Route path="/rate-trends" element={<RateTrends competitorsDB={competitorsDB} />} />
+          <Route path="/" element={
+            <Box component="main" sx={{ 
+              flexGrow: 1, 
+              p: { xs: 2, sm: 3, md: 4 }, 
+              mt: 8,
+              ml: { sm: open ? `${drawerWidth}px` : '72px' },
+              transition: 'margin-left 0.3s ease',
+              width: { sm: `calc(100% - ${open ? drawerWidth : 72}px)` }
+            }}>
+              <Drawer
+                variant="permanent"
+                open={open}
+                sx={{
+                  width: open ? drawerWidth : 72,
+                  flexShrink: 0,
+                  whiteSpace: 'nowrap',
+                  boxSizing: 'border-box',
+                  position: 'fixed',
+                  '& .MuiDrawer-paper': {
+                    width: open ? drawerWidth : 72,
+                    transition: 'width 0.3s ease',
+                    boxSizing: 'border-box',
+                    border: 'none',
+                    backgroundColor: 'white',
+                    overflowX: 'hidden',
+                    boxShadow: '1px 0 8px rgba(0,0,0,0.05)',
+                    zIndex: (theme) => theme.zIndex.drawer,
+                    height: '100%',
+                    position: 'fixed'
+                  },
+                }}
+              >
+                <Toolbar sx={{ minHeight: { xs: 64, sm: 70 } }} />
+                <Box sx={{ overflow: 'auto', mt: 2 }}>
+                  <List>
+                    {sidebarItems.map((item) => (
+                      <ListItem key={item.text} disablePadding>
+                        <ListItemButton
+                          component={Link}
+                          to={item.path}
+                          sx={{
+                            minHeight: 48,
+                            px: 2.5,
+                            justifyContent: open ? 'initial' : 'center',
+                          }}
+                        >
+                          <ListItemIcon
+                            sx={{
+                              minWidth: 0,
+                              mr: open ? 3 : 'auto',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            {item.icon}
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary={item.text} 
+                            sx={{ 
+                              opacity: open ? 1 : 0,
+                              display: open ? 'block' : 'none'
+                            }} 
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+              </Drawer>
+
+              <Box
+                sx={{
+                  flexGrow: 1,
+                  width: '100%',
+                  transition: 'all 0.3s ease',
+                  backgroundColor: 'transparent',
+                  maxWidth: '100%'
+                }}
+              >
+                <Grid 
+                  container 
+                  spacing={4} 
+                  sx={{ 
+                    mb: 4,
+                    width: '100%',
+                    mx: 0,
+                    mt: 0
                   }}
                 >
-                  HYATT
-                </Box>
-              </Box>
-            )}
-          </Toolbar>
-          <Divider />
-          <List>
-            {sidebarItems.map((item, idx) => (
-              <ListItem
-                button
-                key={item.text}
-                component={Link}
-                to={idx === 0 ? '/' : idx === 1 ? '/rate-trends' : '#'}
-                sx={{
-                  borderRadius: 2,
-                  my: 0.5,
-                  justifyContent: sidebarOpen ? 'initial' : 'center',
-                  px: sidebarOpen ? 2 : 1,
-                  transition: 'background 0.2s',
-                  '&:hover': { bgcolor: 'action.hover' },
-                }}
-                selected={window.location.pathname === (idx === 0 ? '/' : idx === 1 ? '/rate-trends' : '#')}
-              >
-                <ListItemIcon sx={{
-                  color: idx === 0 ? 'primary.main' : 'inherit',
-                  minWidth: 0,
-                  mr: sidebarOpen ? 2 : 'auto',
-                  justifyContent: 'center',
-                  transition: 'margin 0.2s',
-                }}>
-                  {item.icon}
-                </ListItemIcon>
-                {sidebarOpen && (
-                  <ListItemText
-                    primary={item.text}
-                    primaryTypographyProps={{ fontWeight: idx === 0 ? 700 : 500 }}
-                  />
-                )}
-              </ListItem>
-            ))}
-          </List>
-          <Box flexGrow={1} />
-          <Divider />
-          <List>
-            <ListItem button sx={{ borderRadius: 2, my: 0.5, justifyContent: sidebarOpen ? 'initial' : 'center', px: sidebarOpen ? 2 : 1 }}>
-              <ListItemIcon sx={{ minWidth: 0, mr: sidebarOpen ? 2 : 'auto', justifyContent: 'center' }}><SettingsIcon color="action" /></ListItemIcon>
-              {sidebarOpen && <ListItemText primary="Settings" />}
-            </ListItem>
-          </List>
-          <Box p={2} sx={{ display: 'flex', justifyContent: sidebarOpen ? 'flex-start' : 'center' }}>
-            <Box display="flex" alignItems="center" gap={1}>
-              <PersonIcon color="primary" />
-              {sidebarOpen && (
-                <Box>
-                  <Typography variant="body2" fontWeight={700}>John Mathew</Typography>
-                  <Typography variant="caption" color="success.main">100% Complete</Typography>
-                </Box>
-              )}
-            </Box>
-          </Box>
-        </Drawer>
-        {/* Main Content Routing */}
-        <Box component="main" sx={{ flexGrow: 1, p: 0, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-          <Routes>
-            <Route path="/" element={
-              <React.Fragment>
-                <AppBar position="fixed" color="inherit" elevation={0} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, bgcolor: '#fff', borderBottom: '1px solid #e0e0e0' }}>
-                  <Toolbar sx={{ minHeight: 64, display: 'flex', gap: 2 }}>
-                    <IconButton color="primary" edge="start" onClick={handleSidebarToggle} sx={{ mr: 2 }}>
-                      {sidebarOpen ? <ChevronLeftIcon /> : <MenuIcon />}
-                    </IconButton>
-                    <Typography variant="h6" color="primary" fontWeight={800} sx={{ letterSpacing: 1, mr: 3 }}>
-                      Navigator
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexGrow: 1 }}>
-                      <FormControl size="small" sx={{ minWidth: 180 }}>
-                        <InputLabel>Property</InputLabel>
-                        <Select label="Property" value="Hyatt, London">
-                          <MenuItem value="Hyatt, London">Hyatt, London</MenuItem>
-                          <MenuItem value="Hyatt, Paris">Hyatt, Paris</MenuItem>
-                        </Select>
-                      </FormControl>
-                      <FormControl size="small" sx={{ minWidth: 140 }}>
-                        <InputLabel>Period</InputLabel>
-                        <Select
-                          label="Period"
-                          value={period}
-                          onChange={e => setPeriod(e.target.value)}
-                        >
-                          <MenuItem value="Next 7 Days">Next 7 Days</MenuItem>
-                          <MenuItem value="Next 14 Days">Next 14 Days</MenuItem>
-                          <MenuItem value="Next 30 Days">Next 30 Days</MenuItem>
-                        </Select>
-                      </FormControl>
-                      <FormControl size="small" sx={{ minWidth: 160 }}>
-                        <InputLabel>Compare with</InputLabel>
-                        <Select
-                          label="Compare with"
-                          value={compareWith}
-                          onChange={e => setCompareWith(e.target.value)}
-                        >
-                          <MenuItem value="Yesterday">Yesterday</MenuItem>
-                          <MenuItem value="Last 14 days">Last 14 days</MenuItem>
-                          <MenuItem value="Last 30 days">Last 30 days</MenuItem>
-                        </Select>
-                      </FormControl>
-                      <FormControl size="small" sx={{ minWidth: 140 }}>
-                        <InputLabel>OTA Channel</InputLabel>
-                        <Select
-                          label="OTA Channel"
-                          value={otaChannel}
-                          onChange={e => setOtaChannel(e.target.value)}
-                        >
-                          <MenuItem value="All">All</MenuItem>
-                          <MenuItem value="Booking.com">Booking.com</MenuItem>
-                          <MenuItem value="Expedia">Expedia</MenuItem>
-                          <MenuItem value="Agoda">Agoda</MenuItem>
-                        </Select>
-                      </FormControl>
-                      <FormControl size="small" sx={{ minWidth: 140 }}>
-                        <InputLabel>Compset</InputLabel>
-                        <Select
-                          label="Compset"
-                          value={compset}
-                          onChange={e => setCompset(e.target.value)}
-                        >
-                          <MenuItem value="Primary">Primary</MenuItem>
-                          <MenuItem value="Secondary">Secondary</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Box>
-                    <Button
-                      onClick={handleAIClick}
+                  <Grid 
+                    item 
+                    xs={12} 
+                    md={4} 
+                    sx={{ 
+                      p: { xs: 1, sm: 2 },
+                      flex: 1,
+                      display: 'flex'
+                    }}
+                  >
+                    <Card
+                      elevation={0}
                       sx={{
-                        ml: 2,
-                        px: 3,
-                        py: 1.2,
+                        width: '100%',
+                        minHeight: 180,
                         borderRadius: 3,
-                        fontWeight: 700,
-                        fontSize: 16,
-                        background: '#fff',
-                        border: '1.5px solid #d1d5db',
-                        boxShadow: '0 2px 8px 0 rgba(16,30,54,0.06)',
-                        textTransform: 'none',
-                        color: '#222',
-                        transition: 'border-color 0.2s, background 0.2s',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        bgcolor: 'white',
+                        p: { xs: 2.5, sm: 3 },
+                        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                         '&:hover': {
-                          borderColor: '#b0b3b8',
-                          background: '#f5f6fa',
-                        },
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 12px 24px rgba(0,0,0,0.05)'
+                        }
                       }}
                     >
-                      <span
-                        style={{
-                          background: 'linear-gradient(90deg, #1976d2 0%, #00c6fb 100%)',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          backgroundClip: 'text',
-                          fontWeight: 700,
-                          fontSize: 16,
-                          letterSpacing: 1,
+                      <OverviewCard
+                        title="Average Daily Rate"
+                        value="£145"
+                        icon={<TrendingUpIcon />}
+                        trend="+5.2%"
+                        trendLabel="vs last week"
+                        explanation="Current ADR performance"
+                      />
+                    </Card>
+                  </Grid>
+                  <Grid 
+                    item 
+                    xs={12} 
+                    md={4} 
+                    sx={{ 
+                      p: { xs: 1, sm: 2 },
+                      flex: 1,
+                      display: 'flex'
+                    }}
+                  >
+                    <Card
+                      elevation={0}
+                      sx={{
+                        width: '100%',
+                        minHeight: 180,
+                        borderRadius: 3,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        bgcolor: 'white',
+                        p: { xs: 2.5, sm: 3 },
+                        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 12px 24px rgba(0,0,0,0.05)'
+                        }
+                      }}
+                    >
+                      <OverviewCard
+                        title="Market Position"
+                        value="3rd"
+                        icon={<EqualizerIcon />}
+                        trend="Top 3"
+                        trendLabel="out of 10 competitors"
+                        explanation="Current competitive ranking"
+                      />
+                    </Card>
+                  </Grid>
+                  <Grid 
+                    item 
+                    xs={12} 
+                    md={4} 
+                    sx={{ 
+                      p: { xs: 1, sm: 2 },
+                      flex: 1,
+                      display: 'flex'
+                    }}
+                  >
+                    <Card
+                      elevation={0}
+                      sx={{
+                        width: '100%',
+                        minHeight: 180,
+                        borderRadius: 3,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        bgcolor: 'white',
+                        p: { xs: 2.5, sm: 3 },
+                        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 12px 24px rgba(0,0,0,0.05)'
+                        }
+                      }}
+                    >
+                      <OverviewCard
+                        title="Rate Parity"
+                        value="98%"
+                        icon={<CompareArrowsIcon />}
+                        trend="+2%"
+                        trendLabel="improvement"
+                        explanation="Cross-channel rate consistency"
+                      />
+                    </Card>
+                  </Grid>
+                </Grid>
+
+                <Box
+                  sx={{
+                    bgcolor: 'white',
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    p: { xs: 2, sm: 3, md: 4 },
+                    mb: 4,
+                    width: '100%',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 12px 24px rgba(0,0,0,0.05)'
+                    }
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: { xs: 'column', md: 'row' },
+                      alignItems: { xs: 'flex-start', md: 'center' },
+                      justifyContent: 'space-between',
+                      gap: 3,
+                      mb: 4,
+                      width: '100%'
+                    }}
+                  >
+                    <Typography variant="h5" component="h2" fontWeight="600" color="primary">
+                      Rate Trends Analysis
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        alignItems: { xs: 'stretch', sm: 'center' },
+                        gap: 2
+                      }}
+                    >
+                      <ToggleButtonGroup
+                        value={viewMode}
+                        exclusive
+                        onChange={(e, newValue) => newValue && setViewMode(newValue)}
+                        size="small"
+                      >
+                        <ToggleButton value="graph" aria-label="graph view">
+                          <ShowChartIcon sx={{ mr: 1 }} />
+                          Graph
+                        </ToggleButton>
+                        <ToggleButton value="table" aria-label="table view">
+                          <BarChartIcon sx={{ mr: 1 }} />
+                          Table
+                        </ToggleButton>
+                      </ToggleButtonGroup>
+
+                      <FormControl
+                        size="small"
+                        sx={{
+                          minWidth: 150,
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: 2
+                          }
                         }}
                       >
-                        ASK AI
-                      </span>
-                    </Button>
-                  </Toolbar>
-                </AppBar>
-                <Toolbar sx={{ minHeight: 64 }} />
-                <Box sx={{ flexGrow: 1, p: { xs: 2, md: 4 }, bgcolor: '#f5f6fa', minHeight: 0 }}>
-                  {/* Header with search */}
-                  <Box mb={4}></Box>
-                  {/* Stat Cards */}
-                  <Grid container spacing={4} sx={{ mb: 4, display: 'flex', alignItems: 'center' }}>
-                    <Grid item xs={12} md={4} sx={{ display: 'flex', flex: 1 }}>
-                      <OverviewCard
-                        title="ADR"
-                        value={`$${kpiCurrent.ADR}`}
-                        trend={(() => { const v = getVariance(kpiCurrent.ADR, kpiCompare.ADR); return (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; })()}
-                        trendLabel={compareWith}
-                        trendColor={getVariance(kpiCurrent.ADR, kpiCompare.ADR) >= 0 ? 'success.main' : 'error.main'}
-                        miniChart={<Box component="span" sx={{ width: 48, height: 32, display: 'inline-block', bgcolor: 'transparent' }}><svg width="48" height="32"><rect x="2" y="12" width="4" height="18" rx="2" fill="#1db954"/><rect x="8" y="8" width="4" height="22" rx="2" fill="#1db954"/><rect x="14" y="4" width="4" height="26" rx="2" fill="#1db954"/><rect x="20" y="10" width="4" height="20" rx="2" fill="#1db954"/><rect x="26" y="14" width="4" height="16" rx="2" fill="#1db954"/><rect x="32" y="18" width="4" height="12" rx="2" fill="#1db954"/><rect x="38" y="14" width="4" height="16" rx="2" fill="#1db954"/></svg></Box>}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={4} sx={{ display: 'flex', flex: 1 }}>
-                      <OverviewCard
-                        title="Availability"
-                        value={`${kpiCurrent.availability}%`}
-                        trend={(() => { const v = getVariance(kpiCurrent.availability, kpiCompare.availability); return (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; })()}
-                        trendLabel={compareWith}
-                        trendColor={getVariance(kpiCurrent.availability, kpiCompare.availability) >= 0 ? 'success.main' : 'error.main'}
-                        miniChart={<Box component="span" sx={{ width: 48, height: 32, display: 'inline-block', bgcolor: 'transparent' }}><svg width="48" height="32"><rect x="2" y="18" width="4" height="12" rx="2" fill="#1da1f2"/><rect x="8" y="10" width="4" height="20" rx="2" fill="#1da1f2"/><rect x="14" y="6" width="4" height="24" rx="2" fill="#1da1f2"/><rect x="20" y="12" width="4" height="18" rx="2" fill="#1da1f2"/><rect x="26" y="16" width="4" height="14" rx="2" fill="#1da1f2"/><rect x="32" y="20" width="4" height="10" rx="2" fill="#1da1f2"/><rect x="38" y="16" width="4" height="14" rx="2" fill="#1da1f2"/></svg></Box>}
-                      />
-                    </Grid>
-                    <Grid item xs={12} md={4} sx={{ display: 'flex', flex: 1 }}>
-                      <OverviewCard
-                        title="Parity"
-                        value={`${kpiCurrent.parity}%`}
-                        trend={(() => { const v = getVariance(kpiCurrent.parity, kpiCompare.parity); return (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; })()}
-                        trendLabel={compareWith}
-                        trendColor={getVariance(kpiCurrent.parity, kpiCompare.parity) >= 0 ? 'success.main' : 'error.main'}
-                        miniChart={<Box component="span" sx={{ width: 48, height: 32, display: 'inline-block', bgcolor: 'transparent' }}><svg width="48" height="32"><rect x="2" y="18" width="4" height="12" rx="2" fill="#ff4d4f"/><rect x="8" y="10" width="4" height="20" rx="2" fill="#ff4d4f"/><rect x="14" y="6" width="4" height="24" rx="2" fill="#ff4d4f"/><rect x="20" y="12" width="4" height="18" rx="2" fill="#ff4d4f"/><rect x="26" y="16" width="4" height="14" rx="2" fill="#ff4d4f"/><rect x="32" y="20" width="4" height="10" rx="2" fill="#ff4d4f"/><rect x="38" y="16" width="4" height="14" rx="2" fill="#ff4d4f"/></svg></Box>}
-                      />
-                    </Grid>
-                  </Grid>
-                  {/* Rate Trends and AI Insights Cards */}
-                  <Box sx={{ mb: 4, width: '100%' }}>
-                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, alignItems: 'stretch', width: '100%' }}>
-                      <Box sx={{ flex: { xs: '1 1 100%', md: '0 1 80%' }, maxWidth: { xs: '100%', md: '80%' }, minWidth: 0 }}>
-                        <Card sx={{ 
-                          height: '100%',
-                          bgcolor: '#fff', 
-                          borderRadius: 3, 
-                          boxShadow: '0 2px 12px 0 rgba(16,30,54,0.04)', 
-                          border: '1px solid #f0f1f3',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          minHeight: 360
-                        }}>
-                          <CardContent sx={{ height: '100%', p: 3 }}>
-                            <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                              <Box>
-                                <Typography variant="h6" fontWeight={700}>Rate Trends</Typography>
-                                <Typography variant="subtitle2" color="text.secondary" fontWeight={500}>
-                                  {period}
-                                </Typography>
-                              </Box>
-                              <ToggleButtonGroup
-                                value={chartView}
-                                exclusive
-                                onChange={(e, v) => v && setChartView(v)}
-                                size="small"
-                              >
-                                <ToggleButton value="bar" aria-label="Bar Chart" sx={{ px: 2 }}>
-                                  <BarChartIcon fontSize="small" />
-                                  <Box component="span" sx={{ ml: 1, fontWeight: 600, fontSize: 13 }}>Bar chart</Box>
-                                </ToggleButton>
-                                <ToggleButton value="line" aria-label="Trend Line" sx={{ px: 2 }}>
-                                  <ShowChartIcon fontSize="small" />
-                                  <Box component="span" sx={{ ml: 1, fontWeight: 600, fontSize: 13 }}>Trend line</Box>
-                                </ToggleButton>
-                              </ToggleButtonGroup>
-                            </Box>
-                            <Box sx={{ height: 320, width: '100%' }}>
-                              <ResponsiveContainer>
-                                {chartView === 'bar' ? (
-                                  <BarChart data={trendsCurrent} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                                    <defs>
-                                      <linearGradient id="colorADR" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#1976d2" stopOpacity={0.9}/>
-                                        <stop offset="100%" stopColor="#90caf9" stopOpacity={0.7}/>
-                                      </linearGradient>
-                                      <linearGradient id="colorCompset" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#9c27b0" stopOpacity={0.9}/>
-                                        <stop offset="100%" stopColor="#ce93d8" stopOpacity={0.7}/>
-                                      </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#e3e6ee" />
-                                    <XAxis dataKey="day" tick={{ fontSize: 12, fill: '#67749E' }} axisLine={false} tickLine={false} tickFormatter={d => d.replace('Day ', '')} />
-                                    <YAxis tick={{ fontSize: 14, fill: '#67749E' }} axisLine={false} tickLine={false} />
-                                    <Tooltip
-                                      cursor={{ fill: '#e3f2fd' }}
-                                      content={({ active, payload, label }) => {
-                                        if (active && payload && payload.length) {
-                                          const data = payload[0].payload;
-                                          // Calculate the date for this day (assuming start date is 2025-06-01)
-                                          const startDate = new Date('2025-06-01');
-                                          const dayIndex = parseInt(data.day.replace('Day ', '')) - 1;
-                                          const thisDate = new Date(startDate);
-                                          thisDate.setDate(startDate.getDate() + dayIndex);
-                                          const dayOfWeek = thisDate.toLocaleDateString('en-US', { weekday: 'long' });
-                                          const dateStr = thisDate.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: '2-digit' });
-                                          return (
-                                            <Box p={2} bgcolor="#fff" borderRadius={2} boxShadow={4} minWidth={220} style={{ pointerEvents: 'auto' }}>
-                                              <Typography variant="subtitle2" fontWeight={700} mb={0.5} sx={{ color: '#23272E' }}>
-                                                {dayOfWeek}, {dateStr}
-                                              </Typography>
-                                              <Typography variant="body2" color="text.secondary" mb={0.5}>
-                                                <span style={{ color: '#1976d2', fontWeight: 700 }}>ADR:</span> <b>${data.ADR}</b>
-                                              </Typography>
-                                              <Typography variant="body2" color="text.secondary" mb={0.5}>
-                                                <span style={{ color: '#9c27b0', fontWeight: 700 }}>Compset:</span> <b>${data.Compset}</b>
-                                              </Typography>
-                                              <Typography variant="body2" color="primary.main" fontWeight={700} mt={1}>Position: {data.myHotel.position} out of 11</Typography>
-                                            </Box>
-                                          );
-                                        }
-                                        return null;
-                                      }}
-                                    />
-                                    <Legend iconType="circle" />
-                                    <Bar dataKey="ADR" name="ADR" fill="url(#colorADR)" radius={[12, 12, 0, 0]} barSize={8}
-                                      style={{ transition: 'filter 0.2s' }}
-                                      onMouseMove={state => {
-                                        if (state && state.activePayload && state.activePayload[0]) {
-                                          setHoveredDay(state.activePayload[0].payload);
-                                        }
-                                      }}
-                                      onMouseLeave={() => setHoveredDay(null)}
-                                    />
-                                    <Bar dataKey="Compset" name="Avg Compset" fill="url(#colorCompset)" radius={[12, 12, 0, 0]} barSize={8}
-                                      style={{ transition: 'filter 0.2s' }}
-                                      onMouseMove={state => {
-                                        if (state && state.activePayload && state.activePayload[0]) {
-                                          setHoveredDay(state.activePayload[0].payload);
-                                        }
-                                      }}
-                                      onMouseLeave={() => setHoveredDay(null)}
-                                    />
-                                  </BarChart>
-                                ) : (
-                                  <LineChart data={trendsCurrent} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                                    <defs>
-                                      <linearGradient id="lineADRGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#1976d2" stopOpacity={0.25}/>
-                                        <stop offset="100%" stopColor="#1976d2" stopOpacity={0}/>
-                                      </linearGradient>
-                                      <linearGradient id="lineCompsetGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#9c27b0" stopOpacity={0.18}/>
-                                        <stop offset="100%" stopColor="#9c27b0" stopOpacity={0}/>
-                                      </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#e3e6ee" />
-                                    <XAxis dataKey="day" tick={{ fontSize: 12, fill: '#67749E' }} axisLine={false} tickLine={false} tickFormatter={d => d.replace('Day ', '')} />
-                                    <YAxis tick={{ fontSize: 14, fill: '#67749E' }} axisLine={false} tickLine={false} />
-                                    <Tooltip
-                                      cursor={{ fill: '#e3f2fd' }}
-                                      content={({ active, payload, label }) => {
-                                        if (active && payload && payload.length) {
-                                          const data = payload[0].payload;
-                                          // Calculate the date for this day (assuming start date is 2025-06-01)
-                                          const startDate = new Date('2025-06-01');
-                                          const dayIndex = parseInt(data.day.replace('Day ', '')) - 1;
-                                          const thisDate = new Date(startDate);
-                                          thisDate.setDate(startDate.getDate() + dayIndex);
-                                          const dayOfWeek = thisDate.toLocaleDateString('en-US', { weekday: 'long' });
-                                          const dateStr = thisDate.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: '2-digit' });
-                                          return (
-                                            <Box p={2} bgcolor="#fff" borderRadius={2} boxShadow={4} minWidth={220} style={{ pointerEvents: 'auto' }}>
-                                              <Typography variant="subtitle2" fontWeight={700} mb={0.5} sx={{ color: '#23272E' }}>
-                                                {dayOfWeek}, {dateStr}
-                                              </Typography>
-                                              <Typography variant="body2" color="text.secondary" mb={0.5}>
-                                                <span style={{ color: '#1976d2', fontWeight: 700 }}>ADR:</span> <b>${data.ADR}</b>
-                                              </Typography>
-                                              <Typography variant="body2" color="text.secondary" mb={0.5}>
-                                                <span style={{ color: '#9c27b0', fontWeight: 700 }}>Compset:</span> <b>${data.Compset}</b>
-                                              </Typography>
-                                              <Typography variant="body2" color="primary.main" fontWeight={700} mt={1}>Position: {data.myHotel.position} out of 11</Typography>
-                                            </Box>
-                                          );
-                                        }
-                                        return null;
-                                      }}
-                                    />
-                                    <Legend iconType="circle" />
-                                    <Line type="monotone" dataKey="ADR" name="ADR" stroke="#1976d2" strokeWidth={2} dot={{ r: 5, stroke: '#1976d2', strokeWidth: 2, fill: '#fff', filter: 'drop-shadow(0 2px 8px #1976d233)' }} activeDot={{ r: 7 }} fillOpacity={1} fill="url(#lineADRGradient)" />
-                                    <Line type="monotone" dataKey="Compset" name="Avg Compset" stroke="#9c27b0" strokeWidth={2} dot={{ r: 5, stroke: '#9c27b0', strokeWidth: 2, fill: '#fff', filter: 'drop-shadow(0 2px 8px #9c27b033)' }} activeDot={{ r: 7 }} fillOpacity={1} fill="url(#lineCompsetGradient)" />
-                                  </LineChart>
-                                )}
-                              </ResponsiveContainer>
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      </Box>
-                      <Box sx={{ flex: { xs: '1 1 100%', md: '0 1 20%' }, maxWidth: { xs: '100%', md: '20%' }, minWidth: 0 }}>
-                        <Card sx={{ 
-                          height: '100%',
-                          bgcolor: '#e3f2fd', 
-                          borderRadius: 3, 
-                          boxShadow: '0 2px 12px 0 rgba(16,30,54,0.04)', 
-                          border: '1px solid #bbdefb',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          minHeight: 360
-                        }}>
-                          <CardContent sx={{ height: '100%', p: 3 }}>
-                            <Box display="flex" alignItems="center" gap={1} mb={2}>
-                              <LightbulbIcon color="primary" />
-                              <Typography variant="h6" fontWeight={700}>AI Insight on Rate Trends</Typography>
-                            </Box>
-                            <Box sx={{
-                              p: 2,
-                              bgcolor: 'rgba(255,255,255,0.6)',
+                        <InputLabel>Time Range</InputLabel>
+                        <Select
+                          value={selectedTimeRange}
+                          label="Time Range"
+                          onChange={(e) => setSelectedTimeRange(e.target.value)}
+                        >
+                          {Object.keys(allRateTrendsData).map((range) => (
+                            <MenuItem key={range} value={range}>
+                              {range}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      
+                      {viewMode === 'graph' && (
+                        <ToggleButtonGroup
+                          value={Object.keys(visibleSeries).filter(key => visibleSeries[key])}
+                          onChange={(event, newValues) => {
+                            setVisibleSeries({
+                              ADR: newValues.includes('ADR'),
+                              Compset: newValues.includes('Compset')
+                            });
+                          }}
+                          aria-label="visible series"
+                          sx={{
+                            '& .MuiToggleButton-root': {
                               borderRadius: 2,
-                              height: 'calc(100% - 60px)'
-                            }}>
-                              <Typography variant="body1" color="text.primary" fontWeight={600} mb={1}>
-                                {(() => {
-                                  const adr = kpiCurrent.ADR;
-                                  const compset = kpiCurrent.compsetADR;
-                                  const delta = adr - compset;
-                                  if (delta > 5) {
-                                    return `Your ADR is trending $${delta} above the compset average for ${period}. Consider increasing rates on high-demand dates.`;
-                                  } else if (delta < -5) {
-                                    return `Your ADR is $${Math.abs(delta)} below the compset average for ${period}. You may be underpricing compared to competitors.`;
-                                  } else {
-                                    return `Your ADR is closely aligned with the compset average for ${period}. Monitor for sudden changes or event-driven demand.`;
-                                  }
-                                })()}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                This insight is generated by AI based on your current rate trends and compset data.
-                              </Typography>
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      </Box>
+                              mx: 0.5,
+                              px: 3,
+                              py: 1,
+                              textTransform: 'none',
+                              '&.Mui-selected': {
+                                bgcolor: 'primary.main',
+                                color: 'white',
+                                '&:hover': {
+                                  bgcolor: 'primary.dark',
+                                }
+                              }
+                            }
+                          }}
+                        >
+                          <ToggleButton value="ADR">
+                            Your Hotel
+                          </ToggleButton>
+                          <ToggleButton value="Compset">
+                            Compset
+                          </ToggleButton>
+                        </ToggleButtonGroup>
+                      )}
                     </Box>
                   </Box>
-                  {/* Events & Holidays Card */}
-                  <Card sx={{ mb: 4, bgcolor: '#fff', borderRadius: 3, boxShadow: '0 2px 12px 0 rgba(16,30,54,0.04)', border: '1px solid #f0f1f3' }}>
-                    <CardContent>
-                      <Typography variant="h6" fontWeight={700} mb={2}>Upcoming Events & Holidays in London</Typography>
-                      <Grid container spacing={2}>
-                        {filteredLondonEvents.length === 0 ? (
-                          <Grid item xs={12}>
-                            <Typography variant="body2" color="text.secondary">No events or holidays in this period.</Typography>
-                          </Grid>
-                        ) : (
-                          filteredLondonEvents.sort((a, b) => new Date(a.date) - new Date(b.date)).map((event, idx) => (
-                            <Grid item xs={12} md={6} key={event.name + event.date}>
-                              <Card
-                                variant="outlined"
-                                sx={{
-                                  borderRadius: 2,
-                                  mb: 2,
-                                  bgcolor: '#fff',
-                                  borderLeft: `6px solid ${event.type === 'holiday' ? '#2e7d32' : '#1976d2'}`,
-                                  boxShadow: '0 2px 12px 0 rgba(16,30,54,0.04)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  minHeight: 90,
-                                  transition: 'box-shadow 0.2s',
-                                  '&:hover': {
-                                    boxShadow: '0 4px 24px 0 rgba(16,30,54,0.10)',
-                                  },
-                                }}
+                  
+                  {viewMode === 'graph' ? (
+                    <Box sx={{ height: 400, width: '100%', mt: 2 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart 
+                          data={allRateTrendsData[selectedTimeRange]}
+                          margin={{ top: 10, right: 30, left: 10, bottom: 30 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis 
+                            dataKey="date" 
+                            tick={{ fill: '#666' }} 
+                            axisLine={{ stroke: '#e0e0e0' }}
+                            tickLine={{ stroke: '#e0e0e0' }}
+                            dy={10}
+                            tickFormatter={(value) => {
+                              const date = new Date(value);
+                              return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                            }}
+                          />
+                          <YAxis 
+                            tick={{ fill: '#666' }}
+                            axisLine={{ stroke: '#e0e0e0' }}
+                            tickLine={{ stroke: '#e0e0e0' }}
+                            dx={-10}
+                          />
+                          <Tooltip 
+                            contentStyle={{ 
+                              bgcolor: 'white',
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              borderRadius: 2,
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                            }}
+                            labelFormatter={(value) => {
+                              const date = new Date(value);
+                              return `${date.toLocaleDateString('en-US', { weekday: 'long' })}, ${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`;
+                            }}
+                          />
+                          <Legend 
+                            wrapperStyle={{
+                              paddingTop: '20px'
+                            }}
+                          />
+                          {visibleSeries.ADR && (
+                            <Line
+                              type="monotone"
+                              dataKey="ADR"
+                              stroke="#2196f3"
+                              strokeWidth={2}
+                              dot={{ fill: '#2196f3', strokeWidth: 2, r: 4 }}
+                              name="Your Hotel"
+                              activeDot={{ r: 6, strokeWidth: 0 }}
+                            />
+                          )}
+                          {visibleSeries.Compset && (
+                            <Line
+                              type="monotone"
+                              dataKey="Compset"
+                              stroke="#4caf50"
+                              strokeWidth={2}
+                              dot={{ fill: '#4caf50', strokeWidth: 2, r: 4 }}
+                              name="Compset Average"
+                              activeDot={{ r: 6, strokeWidth: 0 }}
+                            />
+                          )}
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </Box>
+                  ) : (
+                    <TableContainer>
+                      <Table sx={{ minWidth: 650 }} size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Date</TableCell>
+                            <TableCell>Day</TableCell>
+                            <TableCell align="right">Your Rate</TableCell>
+                            <TableCell align="right">City Demand</TableCell>
+                            <TableCell align="right">Position</TableCell>
+                            <TableCell>Top 3 Competitors</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {allRateTrendsData[selectedTimeRange].map((row) => {
+                            const date = new Date(row.date);
+                            const position = row.competitors.findIndex(comp => comp.ADR < row.ADR) + 1;
+                            const top3 = row.competitors.slice(0, 3);
+                            
+                            return (
+                              <TableRow
+                                key={row.date}
+                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                               >
-                                <CardContent sx={{ display: 'flex', alignItems: 'center', p: 2, width: '100%' }}>
-                                  <Box display="flex" alignItems="center" justifyContent="center" mr={2}>
-                                    <EventIcon color={event.type === 'holiday' ? 'success' : 'primary'} sx={{ fontSize: 36 }} />
-                                  </Box>
-                                  <Box flexGrow={1}>
-                                    <Typography variant="subtitle1" fontWeight={700} mb={0.5}>{event.name}</Typography>
-                                    <Typography variant="body2" color="text.secondary" mb={0.5}>
-                                      {new Date(event.date).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
-                                    </Typography>
-                                    <Typography variant="caption" color={event.type === 'holiday' ? 'success.main' : 'primary.main'} fontWeight={700}>
-                                      {event.type === 'holiday' ? 'Holiday' : 'Event'}
-                                    </Typography>
-                                  </Box>
-                                  <Box ml={2} display="flex" alignItems="center" justifyContent="center">
+                                <TableCell>
+                                  {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </TableCell>
+                                <TableCell>{row.dayName}</TableCell>
+                                <TableCell align="right">£{row.ADR}</TableCell>
+                                <TableCell align="right">
+                                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
                                     <Box
                                       sx={{
-                                        bgcolor: event.type === 'holiday' ? '#e8f5e9' : '#e3f2fd',
-                                        color: event.type === 'holiday' ? '#2e7d32' : '#1976d2',
-                                        borderRadius: 2,
-                                        px: 1.5,
+                                        width: 60,
+                                        bgcolor: row.cityDemand > 75 ? 'success.light' : row.cityDemand > 50 ? 'warning.light' : 'error.light',
+                                        borderRadius: 1,
+                                        px: 1,
                                         py: 0.5,
-                                        fontWeight: 700,
-                                        fontSize: 15,
-                                        minWidth: 60,
-                                        textAlign: 'center',
+                                        textAlign: 'center'
                                       }}
                                     >
-                                      {new Date(event.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                      {row.cityDemand}%
                                     </Box>
                                   </Box>
-                                </CardContent>
-                              </Card>
-                            </Grid>
-                          ))
-                        )}
-                      </Grid>
-                    </CardContent>
-                  </Card>
-                  {/* Distribution Health Card */}
-                  <Card sx={{ mb: 4, bgcolor: '#fff', borderRadius: 3, boxShadow: '0 2px 12px 0 rgba(16,30,54,0.04)', border: '1px solid #f0f1f3' }}>
-                    <CardContent>
-                      <Typography variant="h6" fontWeight={700} mb={2}>Distribution Health</Typography>
-                      <Grid container spacing={3}>
-                        {distCurrent.map((channel, idx) => {
-                          const prev = distCompare.find(c => c.name === channel.name);
-                          // Calculate deltas
-                          const deltaOtaRank = prev ? channel.otaRank - prev.otaRank : null;
-                          const deltaParity = prev ? channel.parityScore - prev.parityScore : null;
-                          const deltaReviews = prev ? channel.reviews - prev.reviews : null;
-                          // Color logic
-                          const getDeltaColor = v => v > 0 ? '#2e7d32' : v < 0 ? '#d32f2f' : '#888';
-                          return (
-                            <Grid item xs={12} md={4} sx={{ flex: 1, minWidth: 320, maxWidth: 400 }} key={channel.name}>
-                              <Card
-                                variant="outlined"
-                                sx={{
-                                  borderRadius: 2,
-                                  bgcolor: '#f8fafc',
-                                  border: '1px solid #e0e0e0',
-                                  boxShadow: '0 2px 8px 0 rgba(16,30,54,0.04)',
-                                  p: 0,
-                                  height: '100%',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'flex-start',
-                                  transition: 'box-shadow 0.2s',
-                                  '&:hover': {
-                                    boxShadow: '0 4px 24px 0 rgba(16,30,54,0.10)',
-                                  },
-                                }}
-                              >
-                                <CardContent sx={{ width: '100%' }}>
-                                  <Box display="flex" alignItems="center" gap={1} mb={1}>
-                                    {channelData[idx].icon}
-                                    <Typography variant="subtitle1" fontWeight={700} color={channelData[idx].color}>{channel.name}</Typography>
+                                </TableCell>
+                                <TableCell align="right">{position} of {row.competitors.length + 1}</TableCell>
+                                <TableCell>
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                    {top3.map((comp, idx) => (
+                                      <Typography key={comp.name} variant="body2" sx={{ fontSize: '0.75rem' }}>
+                                        {idx + 1}. {comp.name} - £{comp.ADR}
+                                      </Typography>
+                                    ))}
                                   </Box>
-                                  <Box display="flex" flexDirection="column" gap={1}>
-                                    <Box display="flex" alignItems="center" gap={1}>
-                                      <EqualizerIcon fontSize="small" color="primary" />
-                                      <Typography variant="body2" fontWeight={600}>OTA Rank:</Typography>
-                                      <Typography variant="body2">{channel.otaRank}</Typography>
-                                      {deltaOtaRank !== null && (
-                                        <Typography variant="body2" sx={{ color: getDeltaColor(deltaOtaRank), ml: 1 }}>
-                                          ({deltaOtaRank > 0 ? '+' : ''}{deltaOtaRank} vs {compareWith})
-                                        </Typography>
-                                      )}
-                                    </Box>
-                                    <Box display="flex" alignItems="center" gap={1}>
-                                      <StarIcon fontSize="small" color="warning" />
-                                      <Typography variant="body2" fontWeight={600}>Parity Score:</Typography>
-                                      <Typography variant="body2">{channel.parityScore}%</Typography>
-                                      {deltaParity !== null && (
-                                        <Typography variant="body2" sx={{ color: getDeltaColor(deltaParity), ml: 1 }}>
-                                          ({deltaParity > 0 ? '+' : ''}{deltaParity}% vs {compareWith})
-                                        </Typography>
-                                      )}
-                                    </Box>
-                                    <Box display="flex" alignItems="center" gap={1}>
-                                      <StarIcon fontSize="small" color="primary" />
-                                      <Typography variant="body2" fontWeight={600}>Hotel Reviews:</Typography>
-                                      <Typography variant="body2">{channel.reviews}</Typography>
-                                      {deltaReviews !== null && (
-                                        <Typography variant="body2" sx={{ color: getDeltaColor(deltaReviews), ml: 1 }}>
-                                          ({deltaReviews > 0 ? '+' : ''}{deltaReviews} vs {compareWith})
-                                        </Typography>
-                                      )}
-                                    </Box>
-                                  </Box>
-                                </CardContent>
-                              </Card>
-                            </Grid>
-                          );
-                        })}
-                      </Grid>
-                    </CardContent>
-                  </Card>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  )}
                 </Box>
-              </React.Fragment>
-            } />
-            <Route path="/rate-trends" element={<RateTrends />} />
-          </Routes>
-        </Box>
-      </Box>
-      {/* ASK AI Drawer */}
-      <MuiDrawer
-        anchor="right"
-        open={aiDialogOpen}
-        onClose={handleAIClose}
-        sx={{
-          '& .MuiDrawer-paper': {
-            width: { xs: '100%', sm: 400 },
-            boxSizing: 'border-box',
-            p: 0,
-            bgcolor: '#fff',
-            borderLeft: '1px solid #e0e0e0',
-            display: 'flex',
-            flexDirection: 'column',
-          },
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderBottom: '1px solid #f0f1f3' }}>
-          <Box display="flex" alignItems="center" gap={1}>
-            <LightbulbIcon color="primary" />
-            <Typography variant="h6" fontWeight={700}>Ask AI about Rate Shopping</Typography>
-          </Box>
-          <IconButton onClick={handleAIClose}><CloseIcon /></IconButton>
-        </Box>
-        <Box sx={{ flex: 1, overflowY: 'auto', p: 2, pt: 0 }}>
-          <Typography variant="subtitle1" mb={2} color="text.secondary">Select a prompt to get AI-powered insights:</Typography>
-          <Stack spacing={2} mb={2}>
-            {aiPrompts.map((prompt, idx) => (
-              <Button
-                key={prompt.text}
-                variant="outlined"
-                startIcon={prompt.icon}
-                sx={{ justifyContent: 'flex-start', fontWeight: 600, textTransform: 'none', borderRadius: 2, textAlign: 'left' }}
-                onClick={() => handlePromptClick(prompt.text)}
-                fullWidth
-              >
-                {prompt.text}
-              </Button>
-            ))}
-          </Stack>
-          {aiResponse && (
-            <Box mt={3} p={3} bgcolor="#f5f6fa" borderRadius={2}>
-              <Typography variant="body1" fontWeight={600} color="primary.main" mb={1}>AI Response:</Typography>
-              <Typography variant="body2" style={{ whiteSpace: 'pre-line' }}>{aiResponse}</Typography>
-            </Box>
-          )}
-        </Box>
-        <Box sx={{ p: 2, borderTop: '1px solid #f0f1f3', textAlign: 'right' }}>
-          <Button onClick={handleAIClose} color="primary" variant="contained">Close</Button>
-        </Box>
-      </MuiDrawer>
-      {/* Competitor Modal */}
-      <Dialog open={competitorModal.open} onClose={() => setCompetitorModal({ open: false, day: null })} maxWidth="sm" fullWidth>
-        <DialogTitle>My Hotel & Competitors – {competitorModal.day?.day}</DialogTitle>
-        <DialogContent dividers>
-          {competitorModal.day && (
-            <Box>
-              <Typography variant="subtitle1" fontWeight={700} mb={1}>My Hotel</Typography>
-              <Box display="flex" justifyContent="space-between" mb={2} p={1} bgcolor="#e3f2fd" borderRadius={2}>
-                <Typography fontWeight={600}>ADR: ${competitorModal.day.ADR}</Typography>
-                <Typography fontWeight={600}>Position: {competitorModal.day.position} out of 11</Typography>
+
+                {/* Events Card */}
+                <Box
+                  sx={{
+                    bgcolor: 'white',
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    p: { xs: 2, sm: 3, md: 4 },
+                    mb: 4,
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 12px 24px rgba(0,0,0,0.05)'
+                    }
+                  }}
+                >
+                  <Typography variant="h5" component="h2" fontWeight="600" color="primary" mb={4}>
+                    Upcoming Events in London
+                  </Typography>
+                  <Grid container spacing={3}>
+                    {allLondonEvents
+                      .sort((a, b) => new Date(a.date) - new Date(b.date))
+                      .slice(0, 6)
+                      .map((event, index) => (
+                        <Grid item xs={12} sm={6} md={4} key={index}>
+                          <Box
+                            sx={{
+                              p: 2,
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              borderRadius: 2,
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: 2
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                bgcolor: event.type === 'holiday' ? 'error.lighter' : 'primary.lighter',
+                                borderRadius: 1,
+                                p: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              {event.type === 'holiday' ? (
+                                <EventIcon sx={{ color: 'error.main' }} />
+                              ) : (
+                                <CalendarTodayIcon sx={{ color: 'primary.main' }} />
+                              )}
+                            </Box>
+                            <Box>
+                              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 0.5 }}>
+                                {event.name}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {new Date(event.date).toLocaleDateString('en-GB', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Grid>
+                    ))}
+                  </Grid>
+                </Box>
+
+                {/* Distribution Health Card */}
+                <Box
+                  sx={{
+                    bgcolor: 'white',
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    p: { xs: 2, sm: 3, md: 4 },
+                    mb: 4,
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 12px 24px rgba(0,0,0,0.05)'
+                    }
+                  }}
+                >
+                  <Typography variant="h5" component="h2" fontWeight="600" color="primary" mb={4}>
+                    Distribution Health
+                  </Typography>
+                  <Grid container spacing={3}>
+                    {channelData.map((channel, index) => (
+                      <Grid item xs={12} md={4} key={index}>
+                        <Box
+                          sx={{
+                            p: 3,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 2,
+                            height: '100%'
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
+                            <Box
+                              sx={{
+                                bgcolor: 'grey.50',
+                                borderRadius: 1,
+                                p: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              {channel.icon}
+                            </Box>
+                            <Typography variant="h6" fontWeight={600}>
+                              {channel.name}
+                            </Typography>
+                          </Box>
+                          
+                          <Stack spacing={2}>
+                            <Box>
+                              <Typography variant="body2" color="text.secondary" gutterBottom>
+                                OTA Rank
+                              </Typography>
+                              <Typography variant="subtitle1" fontWeight={600}>
+                                {channel.otaRank}
+                              </Typography>
+                            </Box>
+                            
+                            <Box>
+                              <Typography variant="body2" color="text.secondary" gutterBottom>
+                                Parity Score
+                              </Typography>
+                              <Typography variant="subtitle1" fontWeight={600}>
+                                {channel.parityScore}
+                              </Typography>
+                            </Box>
+                            
+                            <Box>
+                              <Typography variant="body2" color="text.secondary" gutterBottom>
+                                Reviews
+                              </Typography>
+                              <Typography variant="subtitle1" fontWeight={600}>
+                                {channel.reviews}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Box>
               </Box>
-              <Typography variant="subtitle1" fontWeight={700} mb={1}>Competitors</Typography>
-              {competitorModal.day.competitors.map(c => (
-                <Box key={c.name} display="flex" justifyContent="space-between" mb={1} p={1} bgcolor="#f5f6fa" borderRadius={2}>
-                  <Typography>{c.name}</Typography>
-                  <Typography>ADR: ${c.ADR}</Typography>
-                  <Typography>Position: {c.position} out of 11</Typography>
-                </Box>
-              ))}
             </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCompetitorModal({ open: false, day: null })} color="primary" variant="contained">Close</Button>
-        </DialogActions>
-      </Dialog>
+          } />
+        </Routes>
+
+        <AskAIDrawer
+          open={aiDialogOpen}
+          onClose={() => setAiDialogOpen(false)}
+        />
+      </Box>
     </Router>
   );
 }
