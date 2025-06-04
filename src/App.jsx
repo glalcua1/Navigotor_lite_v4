@@ -55,7 +55,7 @@ import ShowChartIcon from '@mui/icons-material/ShowChart';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import CircularProgress from '@mui/material/CircularProgress';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import RateTrends from './RateTrends';
 import TableContainer from '@mui/material/TableContainer';
 import Table from '@mui/material/Table';
@@ -1248,7 +1248,7 @@ function App() {
                             padding: '4px 0',
                             fontSize: 14
                           }}
-                          labelFormatter={(value) => {
+                          labelFormatter={(value, name, props) => {
                             const date = new Date(value);
                             return `${date.toLocaleDateString('en-US', { weekday: 'long' })}, ${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`;
                           }}
