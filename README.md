@@ -1,1 +1,2 @@
 # NavigatorNewv3
+# NavigatorLite
