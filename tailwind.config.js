@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -8,8 +8,11 @@ export default {
     extend: {},
   },
   plugins: [],
+  // Prevent conflicts with Material UI
   corePlugins: {
-    preflight: true,
+    preflight: false,
   },
+  // Important to prevent conflicts with Material UI
+  important: false,
 }
 

@@ -3,8 +3,11 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/NavigatorLite/',
+  base: '/',
   css: {
     postcss: './postcss.config.cjs'
+  },
+  server: {
+    open: true
   }
 }) 

@@ -26,7 +26,7 @@ import EventIcon from '@mui/icons-material/Event';
 import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, Line, LineChart, Tooltip, Area } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, Line, LineChart, Tooltip, Area, ReferenceLine } from 'recharts';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import InputLabel from '@mui/material/InputLabel';
@@ -63,6 +63,9 @@ import TableHead from '@mui/material/TableHead';
 import TableBody from '@mui/material/TableBody';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import BusinessIcon from '@mui/icons-material/Business';
+import AttractionsIcon from '@mui/icons-material/Attractions';
 
 const drawerWidth = 240;
 
@@ -210,8 +213,13 @@ const getNextNDays = (n) => {
   return Array.from({ length: n }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() + i);
+    const dateString = date.toISOString().split('T')[0];
+    
+    // Find events or holidays on this date
+    const eventsOnDate = allLondonEvents.filter(e => e.date === dateString);
+    
     return {
-      date: date.toISOString().split('T')[0],
+      date: dateString,
       dayName: date.toLocaleDateString('en-US', { weekday: 'long' }),
       ADR: 140 + Math.round(Math.random() * 10),
       Compset: 135 + Math.round(Math.random() * 10),
@@ -219,7 +227,8 @@ const getNextNDays = (n) => {
       competitors: competitorsDB.map(comp => ({
         ...comp,
         ADR: comp.ADR + Math.round(Math.random() * 10 - 5)
-      })).sort((a, b) => b.ADR - a.ADR)
+      })).sort((a, b) => b.ADR - a.ADR),
+      events: eventsOnDate
     };
   });
 };
@@ -265,6 +274,46 @@ const londonEvents = [
     importance: 'medium', 
     impactRadius: '10 miles',
     description: 'Athletic event affecting traffic and hotel bookings'
+  },
+  { 
+    name: 'Royal Ascot', 
+    date: '2025-06-17', 
+    footfall: 75000, 
+    importance: 'high', 
+    impactRadius: '7 miles',
+    description: 'Prestigious horse racing event attracting luxury clientele'
+  },
+  { 
+    name: 'Trooping the Colour', 
+    date: '2025-06-14', 
+    footfall: 60000, 
+    importance: 'high', 
+    impactRadius: '5 miles',
+    description: 'Official celebration of the Monarch\'s birthday with parades'
+  },
+  { 
+    name: 'Hampton Court Flower Show', 
+    date: '2025-06-30', 
+    footfall: 40000, 
+    importance: 'medium', 
+    impactRadius: '6 miles',
+    description: 'Major gardening event with international visitors'
+  },
+  { 
+    name: 'London Tech Week', 
+    date: '2025-06-09', 
+    footfall: 55000, 
+    importance: 'medium', 
+    impactRadius: '4 miles',
+    description: 'Week-long technology conference affecting business hotels'
+  },
+  { 
+    name: 'West End Live', 
+    date: '2025-06-21', 
+    footfall: 30000, 
+    importance: 'medium', 
+    impactRadius: '3 miles',
+    description: 'Free musical theatre event in Trafalgar Square'
   },
 ];
 
@@ -384,6 +433,18 @@ function AskAIDrawer({ open, onClose }) {
   const [loading, setLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState('');
   const [question, setQuestion] = useState('');
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setIsVisible(true);
+    } else {
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+      }, 300); // Match the drawer's transition duration
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
 
   const readyMadePrompts = [
     {
@@ -433,206 +494,212 @@ function AskAIDrawer({ open, onClose }) {
   };
 
   return (
-    <Drawer
-      anchor="right"
+    <Dialog
       open={open}
       onClose={onClose}
-      sx={{
-        '& .MuiDrawer-paper': {
+      fullWidth
+      maxWidth="md"
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
           width: { xs: '100%', sm: 450 },
-          boxSizing: 'border-box',
-          p: 3,
-          boxShadow: '-4px 0 24px rgba(0,0,0,0.1)',
-        },
+          maxWidth: { xs: '100%', sm: 450 },
+          margin: { xs: 0, sm: 2 },
+          height: { xs: '100%', sm: 'auto' },
+          maxHeight: { xs: '100%', sm: '90vh' },
+        }
       }}
     >
-      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <Box 
-          display="flex" 
-          alignItems="center" 
-          justifyContent="space-between" 
-          mb={3}
-          pb={2}
-          borderBottom="1px solid"
-          borderColor="divider"
-        >
-          <Box display="flex" alignItems="center" gap={1.5}>
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                p: 1,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
-                boxShadow: '0 4px 8px rgba(33, 150, 243, 0.1)'
-              }}
-            >
-              <SmartToyIcon 
-                sx={{ 
-                  fontSize: 24,
-                  color: 'primary.main',
-                }}
-              />
-            </Box>
-            <Typography 
-              variant="h6" 
-              sx={{
-                fontWeight: 700,
-                background: 'linear-gradient(90deg, #1976d2 0%, #2196f3 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              AI Revenue Assistant
-            </Typography>
-          </Box>
-          <IconButton 
-            onClick={onClose} 
-            size="small"
-            sx={{
-              bgcolor: 'grey.100',
-              '&:hover': {
-                bgcolor: 'grey.200',
-              }
-            }}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Box>
-
-        <Box sx={{ mb: 3 }}>
-          <TextField
-            fullWidth
-            label="Ask about revenue, pricing, or market insights"
-            variant="outlined"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder="E.g., What are the key revenue opportunities for next month?"
-            multiline
-            rows={3}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
-              },
-              '& .MuiInputLabel-root.Mui-focused': {
-                color: 'primary.main',
-              },
-              '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'primary.main',
-                borderWidth: 2,
-              }
-            }}
-          />
-        </Box>
-
-        <Typography 
-          variant="subtitle2" 
-          color="text.secondary" 
-          mb={2}
-          sx={{
-            fontWeight: 600,
-            fontSize: '0.875rem',
-          }}
-        >
-          Ready-made Prompts
-        </Typography>
-
-        <Box sx={{ flex: 1, overflow: 'auto' }}>
-          {readyMadePrompts.map((category) => (
-            <Box key={category.title} mb={3}>
-              <Typography variant="subtitle1" fontWeight={600} mb={1}>
-                {category.title}
-              </Typography>
-              <Stack spacing={1}>
-                {category.prompts.map((prompt) => (
-                  <Button
-                    key={prompt}
-                    variant="outlined"
-                    size="small"
-                    onClick={() => handlePromptClick(prompt)}
-                    sx={{
-                      justifyContent: 'flex-start',
-                      textAlign: 'left',
-                      textTransform: 'none',
-                      borderRadius: 1.5,
-                      p: 1.25,
-                      borderColor: 'divider',
-                      '&:hover': {
-                        borderColor: 'primary.main',
-                        bgcolor: 'primary.lighter',
-                      },
-                    }}
-                  >
-                    {prompt}
-                  </Button>
-                ))}
-              </Stack>
-            </Box>
-          ))}
-        </Box>
-
-        {aiResponse && (
+      <DialogTitle sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        py: 2,
+        px: 3,
+        borderBottom: '1px solid',
+        borderColor: 'divider'
+      }}>
+        <Box display="flex" alignItems="center" gap={1.5}>
           <Box 
             sx={{ 
-              mb: 3, 
-              p: 2.5, 
-              bgcolor: 'primary.lighter', 
-              borderRadius: 2, 
-              overflow: 'auto',
-              border: '1px solid',
-              borderColor: 'primary.light',
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              p: 1,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+              boxShadow: '0 4px 8px rgba(33, 150, 243, 0.1)'
             }}
           >
-            <Typography variant="subtitle2" color="primary.dark" mb={1.5} fontWeight={600}>
-              AI Response:
-            </Typography>
-            <Typography variant="body2" sx={{ whiteSpace: 'pre-line', color: 'text.primary' }}>
-              {aiResponse}
-            </Typography>
+            <StarIcon 
+              sx={{ 
+                fontSize: 24,
+                color: 'primary.main',
+              }}
+            />
           </Box>
-        )}
-
-        {loading && (
-          <Box display="flex" justifyContent="center" my={4}>
-            <CircularProgress />
-          </Box>
-        )}
-
-        <Box sx={{ mt: 'auto', pt: 2, borderTop: 1, borderColor: 'divider' }}>
-          <Button
-            fullWidth
-            variant="contained"
-            onClick={handleAskAI}
-            disabled={!question.trim() || loading}
-            startIcon={<SmartToyIcon />}
+          <Typography 
+            variant="h6" 
             sx={{
-              py: 1.25,
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '1rem',
+              fontWeight: 700,
               background: 'linear-gradient(90deg, #1976d2 0%, #2196f3 100%)',
-              boxShadow: '0 4px 8px rgba(33, 150, 243, 0.3)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                boxShadow: '0 6px 12px rgba(33, 150, 243, 0.4)',
-                transform: 'translateY(-2px)',
-              },
-              '&.Mui-disabled': {
-                background: 'rgba(0, 0, 0, 0.12)',
-              }
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
             }}
           >
-            Get Insights
-          </Button>
+            AI Revenue Assistant
+          </Typography>
         </Box>
-      </Box>
-    </Drawer>
+        <IconButton 
+          onClick={onClose} 
+          size="small"
+          sx={{
+            bgcolor: 'grey.100',
+            '&:hover': {
+              bgcolor: 'grey.200',
+            }
+          }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent sx={{ py: 3, px: 3 }}>
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              fullWidth
+              label="Ask about revenue, pricing, or market insights"
+              variant="outlined"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder="E.g., What are the key revenue opportunities for next month?"
+              multiline
+              rows={3}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'primary.main',
+                  },
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: 'primary.main',
+                },
+                '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'primary.main',
+                  borderWidth: 2,
+                }
+              }}
+            />
+          </Box>
+
+          <Typography 
+            variant="subtitle2" 
+            color="text.secondary" 
+            mb={2}
+            sx={{
+              fontWeight: 600,
+              fontSize: '0.875rem'
+            }}
+          >
+            Ready-made Prompts
+          </Typography>
+
+          <Box sx={{ flex: 1, overflow: 'auto' }}>
+            {readyMadePrompts.map((category) => (
+              <Box key={category.title} mb={3}>
+                <Typography variant="subtitle1" fontWeight={600} mb={1}>
+                  {category.title}
+                </Typography>
+                <Stack spacing={1}>
+                  {category.prompts.map((prompt) => (
+                    <Button
+                      key={prompt}
+                      variant="outlined"
+                      size="small"
+                      onClick={() => handlePromptClick(prompt)}
+                      sx={{
+                        justifyContent: 'flex-start',
+                        textAlign: 'left',
+                        textTransform: 'none',
+                        borderRadius: 1.5,
+                        p: 1.25,
+                        borderColor: 'divider',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          bgcolor: 'primary.lighter',
+                        },
+                      }}
+                    >
+                      {prompt}
+                    </Button>
+                  ))}
+                </Stack>
+              </Box>
+            ))}
+          </Box>
+
+          {aiResponse && (
+            <Box 
+              sx={{ 
+                mb: 3, 
+                p: 2.5, 
+                bgcolor: 'primary.lighter', 
+                borderRadius: 2, 
+                overflow: 'auto',
+                border: '1px solid',
+                borderColor: 'primary.light',
+              }}
+            >
+              <Typography variant="subtitle2" color="primary.dark" mb={1.5} fontWeight={600}>
+                AI Response:
+              </Typography>
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-line', color: 'text.primary' }}>
+                {aiResponse}
+              </Typography>
+            </Box>
+          )}
+
+          {loading && (
+            <Box display="flex" justifyContent="center" my={4}>
+              <CircularProgress />
+            </Box>
+          )}
+        </Box>
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, py: 2, borderTop: 1, borderColor: 'divider' }}>
+        <Button
+          fullWidth
+          variant="contained"
+          onClick={handleAskAI}
+          disabled={!question.trim() || loading}
+          startIcon={<StarIcon />}
+          sx={{
+            py: 1.25,
+            borderRadius: 2,
+            textTransform: 'none',
+            fontWeight: 600,
+            fontSize: '1rem',
+            background: 'linear-gradient(90deg, #1976d2 0%, #2196f3 100%)',
+            boxShadow: '0 4px 8px rgba(33, 150, 243, 0.3)',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              boxShadow: '0 6px 12px rgba(33, 150, 243, 0.4)',
+              transform: 'translateY(-2px)',
+            },
+            '&.Mui-disabled': {
+              background: 'rgba(0, 0, 0, 0.12)',
+            }
+          }}
+        >
+          Get Insights
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
@@ -807,7 +874,7 @@ function App() {
           
           <Button
             variant="contained"
-            startIcon={<SmartToyIcon sx={{ fontSize: 20 }} />}
+            startIcon={<StarIcon sx={{ fontSize: 20 }} />}
             onClick={() => setAiDialogOpen(true)}
             sx={{
               borderRadius: 2,
@@ -863,23 +930,11 @@ function App() {
                 maxWidth: '100%'
               }}
             >
-              <Grid 
-                container 
-                spacing={0} 
-                sx={{ 
-                  mb: 4,
-                  mx: -1,
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  justifyContent: 'space-between',
-                  alignItems: 'stretch',
-                  height: { md: '100%' }
-                }}
-              >
+              <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid 
                   item 
                   xs={12} 
-                  md={4} 
+                  md={3} 
                   sx={{ 
                     p: { xs: 1, sm: 1.5 },
                     display: 'flex',
@@ -897,6 +952,8 @@ function App() {
                       bgcolor: 'white',
                       p: { xs: 2.5, sm: 3 },
                       transition: 'all 0.3s ease',
+                      display: 'flex',
+                      flexDirection: 'column',
                       '&:hover': {
                         transform: 'translateY(-6px)',
                         boxShadow: '0 16px 32px rgba(0,0,0,0.08)',
@@ -917,7 +974,7 @@ function App() {
                 <Grid 
                   item 
                   xs={12} 
-                  md={4} 
+                  md={3} 
                   sx={{ 
                     p: { xs: 1, sm: 1.5 },
                     display: 'flex',
@@ -955,7 +1012,7 @@ function App() {
                 <Grid 
                   item 
                   xs={12} 
-                  md={4} 
+                  md={3} 
                   sx={{ 
                     p: { xs: 1, sm: 1.5 },
                     display: 'flex',
@@ -1292,6 +1349,27 @@ function App() {
                             activeDot={{ r: 6, strokeWidth: 0, fill: '#4caf50' }}
                           />
                         )}
+                        
+                        {/* Adding reference lines for events */}
+                        {allRateTrendsData[selectedTimeRange].map((day, index) => {
+                          if (day.events && day.events.length > 0) {
+                            return (
+                              <ReferenceLine
+                                key={`event-${index}`}
+                                x={day.date}
+                                stroke={day.events[0].type === 'holiday' ? '#f44336' : '#ff9800'}
+                                strokeDasharray="3 3"
+                                label={{
+                                  value: day.events[0].type === 'holiday' ? '🎉' : '📅',
+                                  position: 'insideTopRight',
+                                  fill: day.events[0].type === 'holiday' ? '#f44336' : '#ff9800',
+                                  fontSize: 14,
+                                }}
+                              />
+                            );
+                          }
+                          return null;
+                        })}
                       </LineChart>
                     </ResponsiveContainer>
                   </Box>
@@ -1323,6 +1401,7 @@ function App() {
                           <TableCell align="right">City Demand</TableCell>
                           <TableCell align="right">Position</TableCell>
                           <TableCell>Top 3 Competitors</TableCell>
+                          <TableCell>Events & Holidays</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -1334,7 +1413,15 @@ function App() {
                           return (
                             <TableRow
                               key={row.date}
-                              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                              sx={{ 
+                                '&:last-child td, &:last-child th': { border: 0 },
+                                ...(row.events && row.events.length > 0 && {
+                                  bgcolor: row.events[0].type === 'holiday' ? 'error.lighter' : 'warning.lighter',
+                                  '&:hover': {
+                                    bgcolor: row.events[0].type === 'holiday' ? 'error.lighter' : 'warning.lighter',
+                                  }
+                                })
+                              }}
                             >
                               <TableCell>
                                 {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -1367,6 +1454,41 @@ function App() {
                                   ))}
                                 </Box>
                               </TableCell>
+                              <TableCell>
+                                {row.events && row.events.length > 0 ? (
+                                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                    {row.events.map((event, idx) => (
+                                      <Box 
+                                        key={event.name} 
+                                        sx={{ 
+                                          display: 'flex', 
+                                          alignItems: 'center', 
+                                          gap: 0.5,
+                                          bgcolor: event.type === 'holiday' ? 'error.lighter' : 'warning.lighter',
+                                          border: '1px solid',
+                                          borderColor: event.type === 'holiday' ? 'error.light' : 'warning.light',
+                                          borderRadius: 1,
+                                          px: 1,
+                                          py: 0.5,
+                                        }}
+                                      >
+                                        {event.type === 'holiday' ? (
+                                          <EventIcon sx={{ color: 'error.main', fontSize: 16 }} />
+                                        ) : (
+                                          <CalendarTodayIcon sx={{ color: 'warning.main', fontSize: 16 }} />
+                                        )}
+                                        <Typography variant="caption" fontWeight={600}>
+                                          {event.name}
+                                        </Typography>
+                                      </Box>
+                                    ))}
+                                  </Box>
+                                ) : (
+                                  <Typography variant="caption" color="text.secondary">
+                                    No events
+                                  </Typography>
+                                )}
+                              </TableCell>
                             </TableRow>
                           );
                         })}
@@ -1376,7 +1498,7 @@ function App() {
                 )}
               </Box>
 
-              {/* Events Card */}
+              {/* City Demand Card */}
               <Box
                 sx={{
                   bgcolor: 'white',
@@ -1419,7 +1541,7 @@ function App() {
                       boxShadow: '0 4px 8px rgba(33, 150, 243, 0.1)'
                     }}
                   >
-                    <EventIcon 
+                    <PeopleIcon 
                       sx={{ 
                         fontSize: 28,
                         color: 'primary.main',
@@ -1439,184 +1561,193 @@ function App() {
                       WebkitTextFillColor: 'transparent',
                     }}
                   >
-                    Upcoming Events in London
+                    City Demand
                   </Typography>
                 </Box>
                 
                 <Grid container spacing={3} sx={{ position: 'relative', zIndex: 1 }}>
-                  {allLondonEvents
-                    .sort((a, b) => new Date(a.date) - new Date(b.date))
-                    .slice(0, 6)
-                    .map((event, index) => {
-                      const eventDate = new Date(event.date);
-                      const today = new Date();
-                      const diffTime = Math.abs(eventDate - today);
-                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      const isUpcoming = diffDays <= 14;
+                  <Grid item xs={12} md={4}>
+                    <Box
+                      sx={{
+                        p: 3,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 2,
+                        height: '100%',
+                        transition: 'all 0.2s ease',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 8px 16px rgba(0,0,0,0.08)'
+                        }
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2, position: 'relative', zIndex: 1 }}>
+                        <Box
+                          sx={{
+                            bgcolor: 'grey.50',
+                            borderRadius: 2,
+                            p: 1.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1px solid',
+                            borderColor: 'primary.light',
+                            boxShadow: '0 2px 8px rgba(33, 150, 243, 0.2)'
+                          }}
+                        >
+                          <TrendingUpIcon style={{ color: '#2196f3', fontSize: 28 }} />
+                        </Box>
+                        <Typography variant="h6" fontWeight={600}>
+                          Overall Demand
+                        </Typography>
+                      </Box>
                       
-                      return (
-                        <Grid item xs={12} sm={6} md={4} key={index}>
-                          <Box
-                            sx={{
-                              p: 2.5,
-                              border: '1px solid',
-                              borderColor: isUpcoming ? 'primary.light' : 'divider',
-                              borderRadius: 2,
-                              display: 'flex',
-                              flexDirection: 'column',
-                              height: '100%',
-                              transition: 'all 0.2s ease',
-                              position: 'relative',
-                              overflow: 'hidden',
-                              bgcolor: isUpcoming ? 'primary.lighter' : 'white',
-                              '&:hover': {
-                                borderColor: event.type === 'holiday' ? 'error.main' : 'primary.main',
-                                transform: 'translateY(-4px)',
-                                boxShadow: '0 8px 16px rgba(0,0,0,0.08)'
-                              }
-                            }}
-                          >
-                            {isUpcoming && (
-                              <Box
-                                sx={{
-                                  position: 'absolute',
-                                  top: 8,
-                                  right: 8,
-                                  bgcolor: 'error.main',
-                                  color: 'white',
-                                  fontSize: '0.75rem',
-                                  fontWeight: 600,
-                                  px: 1,
-                                  py: 0.5,
-                                  borderRadius: 4,
-                                  zIndex: 2
-                                }}
-                              >
-                                Soon
-                              </Box>
-                            )}
-                            
-                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
-                              <Box
-                                sx={{
-                                  bgcolor: event.type === 'holiday' ? 'error.lighter' : 'primary.lighter',
-                                  borderRadius: 2,
-                                  p: 1.5,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-                                }}
-                              >
-                                {event.type === 'holiday' ? (
-                                  <EventIcon sx={{ color: 'error.main', fontSize: 24 }} />
-                                ) : (
-                                  <CalendarTodayIcon sx={{ color: 'primary.main', fontSize: 24 }} />
-                                )}
-                              </Box>
-                              <Box>
-                                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 0.5 }}>
-                                  {event.name}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                  {eventDate.toLocaleDateString('en-GB', {
-                                    weekday: 'short',
-                                    day: 'numeric',
-                                    month: 'short',
-                                    year: 'numeric'
-                                  })}
-                                </Typography>
-                                <Box 
-                                  sx={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: 0.5,
-                                    bgcolor: event.type === 'holiday' ? 'error.lighter' : 'primary.lighter',
-                                    borderRadius: 4,
-                                    px: 1,
-                                    py: 0.5,
-                                    width: 'fit-content'
-                                  }}
-                                >
-                                  <Typography variant="caption" color={event.type === 'holiday' ? 'error.main' : 'primary.main'} fontWeight={600}>
-                                    {event.type === 'holiday' ? 'Holiday' : 'Event'}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </Box>
-                            
-                            <Box sx={{ mt: 'auto' }}>
-                              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
-                                {event.description}
-                              </Typography>
-                              
-                              <Grid container spacing={1} sx={{ mt: 1 }}>
-                                <Grid item xs={6}>
-                                  <Box>
-                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem' }}>
-                                      Expected Footfall
-                                    </Typography>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                                      <PeopleIcon sx={{ fontSize: 14, color: 'text.secondary', mr: 0.5 }} />
-                                      <Typography variant="body2" fontWeight={600}>
-                                        {event.footfall.toLocaleString()}
-                                      </Typography>
-                                    </Box>
-                                  </Box>
-                                </Grid>
-                                <Grid item xs={6}>
-                                  <Box>
-                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem' }}>
-                                      Impact Radius
-                                    </Typography>
-                                    <Typography variant="body2" fontWeight={600}>
-                                      {event.impactRadius}
-                                    </Typography>
-                                  </Box>
-                                </Grid>
-                              </Grid>
-                              
-                              <Box sx={{ mt: 1.5 }}>
-                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.7rem', mb: 0.5 }}>
-                                  Importance Level
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                  <Box
-                                    sx={{ 
-                                      width: '100%',
-                                      bgcolor: 'grey.100',
-                                      borderRadius: 5,
-                                      height: 8,
-                                      overflow: 'hidden'
-                                    }}
-                                  >
-                                    <Box 
-                                      sx={{ 
-                                        height: '100%', 
-                                        width: event.importance === 'high' ? '100%' : event.importance === 'medium' ? '66%' : '33%',
-                                        bgcolor: event.importance === 'high' ? 'success.main' : event.importance === 'medium' ? 'warning.main' : 'info.main',
-                                        borderRadius: 5
-                                      }}
-                                    />
-                                  </Box>
-                                  <Typography 
-                                    variant="caption" 
-                                    sx={{ 
-                                      ml: 1,
-                                      color: event.importance === 'high' ? 'success.main' : event.importance === 'medium' ? 'warning.main' : 'info.main',
-                                      fontWeight: 600,
-                                      textTransform: 'capitalize'
-                                    }}
-                                  >
-                                    {event.importance}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </Box>
+                      <Stack spacing={2.5} sx={{ position: 'relative', zIndex: 1 }}>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                            Current Rate
+                          </Typography>
+                          <Typography variant="h4" fontWeight={700} color="primary.main">
+                            85%
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                            <ArrowUpwardIcon sx={{ color: 'success.main', fontSize: 16 }} />
+                            <Typography variant="body2" color="success.main" fontWeight={600}>
+                              +12%
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              vs last month
+                            </Typography>
                           </Box>
-                        </Grid>
-                      );
-                    })}
+                        </Box>
+                      </Stack>
+                    </Box>
+                  </Grid>
+                  
+                  <Grid item xs={12} md={4}>
+                    <Box
+                      sx={{
+                        p: 3,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 2,
+                        height: '100%',
+                        transition: 'all 0.2s ease',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&:hover': {
+                          borderColor: 'success.main',
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 8px 16px rgba(0,0,0,0.08)'
+                        }
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2, position: 'relative', zIndex: 1 }}>
+                        <Box
+                          sx={{
+                            bgcolor: 'success.lighter',
+                            borderRadius: 2,
+                            p: 1.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1px solid',
+                            borderColor: 'success.light',
+                            boxShadow: '0 2px 8px rgba(76, 175, 80, 0.2)'
+                          }}
+                        >
+                          <BusinessIcon style={{ color: '#4caf50', fontSize: 28 }} />
+                        </Box>
+                        <Typography variant="h6" fontWeight={600}>
+                          Business District
+                        </Typography>
+                      </Box>
+                      
+                      <Stack spacing={2.5} sx={{ position: 'relative', zIndex: 1 }}>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                            Current Rate
+                          </Typography>
+                          <Typography variant="h4" fontWeight={700} color="success.main">
+                            92%
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                            <ArrowUpwardIcon sx={{ color: 'success.main', fontSize: 16 }} />
+                            <Typography variant="body2" color="success.main" fontWeight={600}>
+                              +15%
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              vs last month
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Stack>
+                    </Box>
+                  </Grid>
+                  
+                  <Grid item xs={12} md={4}>
+                    <Box
+                      sx={{
+                        p: 3,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 2,
+                        height: '100%',
+                        transition: 'all 0.2s ease',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&:hover': {
+                          borderColor: 'warning.main',
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 8px 16px rgba(0,0,0,0.08)'
+                        }
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2, position: 'relative', zIndex: 1 }}>
+                        <Box
+                          sx={{
+                            bgcolor: 'warning.lighter',
+                            borderRadius: 2,
+                            p: 1.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1px solid',
+                            borderColor: 'warning.light',
+                            boxShadow: '0 2px 8px rgba(255, 152, 0, 0.2)'
+                          }}
+                        >
+                          <AttractionsIcon style={{ color: '#ff9800', fontSize: 28 }} />
+                        </Box>
+                        <Typography variant="h6" fontWeight={600}>
+                          Tourist Areas
+                        </Typography>
+                      </Box>
+                      
+                      <Stack spacing={2.5} sx={{ position: 'relative', zIndex: 1 }}>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                            Current Rate
+                          </Typography>
+                          <Typography variant="h4" fontWeight={700} color="warning.main">
+                            78%
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                            <ArrowUpwardIcon sx={{ color: 'success.main', fontSize: 16 }} />
+                            <Typography variant="body2" color="success.main" fontWeight={600}>
+                              +8%
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              vs last month
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Stack>
+                    </Box>
+                  </Grid>
                 </Grid>
               </Box>
 
